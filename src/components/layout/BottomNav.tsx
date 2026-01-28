@@ -3,9 +3,9 @@ import { Gamepad2, History, Trophy, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/', icon: Gamepad2, label: 'Game' },
+  { path: '/', icon: Trophy, label: 'Stats' },
+  { path: '/game', icon: Gamepad2, label: 'Game' },
   { path: '/history', icon: History, label: 'History' },
-  { path: '/stats', icon: Trophy, label: 'Stats' },
   { path: '/rules', icon: BookOpen, label: 'Rules' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];

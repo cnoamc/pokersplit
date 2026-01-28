@@ -30,10 +30,10 @@ const App = () => {
         <BrowserRouter>
           <div className="min-h-screen bg-background pb-20">
             <Routes>
-              <Route path="/" element={<GamePage />} />
+              <Route path="/" element={<StatsPage />} />
+              <Route path="/game" element={<GamePage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/history/:id" element={<SessionDetailsPage />} />
-              <Route path="/stats" element={<StatsPage />} />
               <Route path="/stats/:id" element={<PlayerStatsPage />} />
               <Route path="/rules" element={<RulesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
