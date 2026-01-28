@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GameSession } from '@/lib/types';
 import { PlayerCard } from './PlayerCard';
 import { GameSummary } from './GameSummary';
+import { useFeedback } from '@/hooks/useFeedback';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -36,13 +37,20 @@ export function LiveGame({
 }: LiveGameProps) {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const { playerAdded, gameEnded } = useFeedback();
 
   const handleAddPlayer = () => {
     if (newPlayerName.trim()) {
       onAddPlayer(newPlayerName.trim());
+      playerAdded();
       setNewPlayerName('');
       setShowAddPlayer(false);
     }
+  };
+
+  const handleEndGame = () => {
+    gameEnded();
+    onEndGame();
   };
 
   const canEndGame = game.players.length >= 2;
@@ -145,7 +153,7 @@ export function LiveGame({
 
       {/* End Game Button */}
       <Button
-        onClick={onEndGame}
+        onClick={handleEndGame}
         disabled={!canEndGame}
         className="w-full h-14 text-lg font-semibold chip-button bg-primary hover:bg-primary/90"
         size="lg"

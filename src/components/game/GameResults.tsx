@@ -2,6 +2,7 @@ import { GameSession } from '@/lib/types';
 import { formatCurrency, generateWhatsAppMessage, getWhatsAppLink } from '@/lib/calculations';
 import { downloadSessionPDF } from '@/lib/pdf';
 import { Button } from '@/components/ui/button';
+import { useFeedback } from '@/hooks/useFeedback';
 import { 
   Check, 
   Copy, 
@@ -25,6 +26,15 @@ interface GameResultsProps {
 
 export function GameResults({ game, onToggleSettlement, onNewGame }: GameResultsProps) {
   const [copied, setCopied] = useState(false);
+  const { settlementPaid } = useFeedback();
+
+  const handleToggleSettlement = (settlementId: string) => {
+    const settlement = game.settlements.find(s => s.id === settlementId);
+    if (settlement && !settlement.settled) {
+      settlementPaid();
+    }
+    onToggleSettlement(settlementId);
+  };
 
   const sortedResults = [...game.results].sort((a, b) => b.netAmount - a.netAmount);
   const winner = sortedResults[0];
@@ -124,7 +134,7 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
             {game.settlements.map((settlement) => (
               <button
                 key={settlement.id}
-                onClick={() => onToggleSettlement(settlement.id)}
+                onClick={() => handleToggleSettlement(settlement.id)}
                 className="w-full flex items-center justify-between p-3 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
