@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.96ad2b28a078437da0c8d7a1b5e01b74',
+  appId: 'com.pokersplit.app',
   appName: 'pokersplit',
   webDir: 'dist',
   server: {
