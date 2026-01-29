@@ -2,7 +2,10 @@ import jsPDF from 'jspdf';
 import { GameSession } from './types';
 import { formatCurrency, formatChips } from './calculations';
 
-export function generateSessionPDF(session: GameSession): jsPDF {
+export function generateSessionPDF(
+  session: GameSession, 
+  getPlayerName: (id: string) => string
+): jsPDF {
   const doc = new jsPDF();
   const { settings, results, settlements, totals } = session;
   
@@ -72,7 +75,8 @@ export function generateSessionPDF(session: GameSession): jsPDF {
   const sortedResults = [...results].sort((a, b) => b.netAmount - a.netAmount);
   
   for (const result of sortedResults) {
-    doc.text(result.playerName.substring(0, 12), 20, y);
+    const playerName = getPlayerName(result.playerId);
+    doc.text(playerName.substring(0, 12), 20, y);
     doc.text(result.buyIns.toString(), 70, y);
     doc.text(formatChips(result.chips), 95, y);
     doc.text(formatCurrency(result.invested, settings.currencySymbol), 125, y);
@@ -109,7 +113,9 @@ export function generateSessionPDF(session: GameSession): jsPDF {
     
     for (const s of settlements) {
       const status = s.settled ? '✓ PAID' : 'Pending';
-      doc.text(`${s.fromPlayer} → ${s.toPlayer}: ${formatCurrency(s.amount, settings.currencySymbol)} [${status}]`, 20, y);
+      const fromName = getPlayerName(s.fromPlayerId);
+      const toName = getPlayerName(s.toPlayerId);
+      doc.text(`${fromName} → ${toName}: ${formatCurrency(s.amount, settings.currencySymbol)} [${status}]`, 20, y);
       y += 6;
     }
   }
@@ -123,8 +129,11 @@ export function generateSessionPDF(session: GameSession): jsPDF {
   return doc;
 }
 
-export function downloadSessionPDF(session: GameSession): void {
-  const doc = generateSessionPDF(session);
+export function downloadSessionPDF(
+  session: GameSession, 
+  getPlayerName: (id: string) => string
+): void {
+  const doc = generateSessionPDF(session, getPlayerName);
   const filename = `pokersplit-${session.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(filename);
 }

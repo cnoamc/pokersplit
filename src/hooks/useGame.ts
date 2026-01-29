@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameSession, PlayerInGame, GameSettings, GameMode } from '@/lib/types';
+import { GameSession, PlayerInGame, GameSettings, GameMode, Player } from '@/lib/types';
 import { 
   getActiveGame, 
   saveActiveGame, 
   clearActiveGame, 
   saveSession, 
   generateId,
-  updatePlayerStatsFromGame,
-  getAppSettings
+  getAppSettings,
+  getAllPlayers,
+  getPlayerNamesMap
 } from '@/lib/storage';
 import { 
   calculateTotals, 
@@ -22,6 +23,12 @@ export function useGame() {
   const [phase, setPhase] = useState<GamePhase>('setup');
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState('₪');
+  const [playerNamesMap, setPlayerNamesMap] = useState<Map<string, string>>(new Map());
+
+  const refreshPlayerNames = useCallback(async () => {
+    const map = await getPlayerNamesMap();
+    setPlayerNamesMap(map);
+  }, []);
 
   // Load active game on mount
   useEffect(() => {
@@ -35,6 +42,8 @@ export function useGame() {
           setGame(activeGame);
           setPhase(activeGame.status === 'finished' ? 'results' : 'playing');
         }
+        
+        await refreshPlayerNames();
       } catch (error) {
         console.error('Error loading game:', error);
       } finally {
@@ -42,7 +51,7 @@ export function useGame() {
       }
     }
     loadGame();
-  }, []);
+  }, [refreshPlayerNames]);
 
   // Save game whenever it changes
   useEffect(() => {
@@ -51,11 +60,16 @@ export function useGame() {
     }
   }, [game, loading]);
 
+  const getPlayerName = useCallback((playerId: string): string => {
+    return playerNamesMap.get(playerId) || 'Unknown Player';
+  }, [playerNamesMap]);
+
   const startGame = useCallback(async (
     mode: GameMode,
     buyInValue: number,
     chipsPerBuyIn: number,
-    title?: string
+    title?: string,
+    selectedPlayerIds?: string[]
   ) => {
     const settings = await getAppSettings();
     const now = new Date();
@@ -73,14 +87,21 @@ export function useGame() {
       createdAt: now.toISOString(),
     };
 
+    // Create initial players from selected player IDs
+    const initialPlayers: PlayerInGame[] = (selectedPlayerIds || []).map(playerId => ({
+      playerId,
+      buyIns: 1,
+      currentChips: chipsPerBuyIn,
+    }));
+
     const newGame: GameSession = {
       id: generateId(),
       title: title || defaultTitle,
       settings: gameSettings,
-      players: [],
+      players: initialPlayers,
       results: [],
       settlements: [],
-      totals: { totalBuyIns: 0, totalMoney: 0, totalChips: 0, expectedChips: 0 },
+      totals: calculateTotals(initialPlayers, gameSettings),
       createdAt: now.toISOString(),
       status: 'active',
     };
@@ -88,14 +109,19 @@ export function useGame() {
     setGame(newGame);
     setPhase('playing');
     await saveActiveGame(newGame);
-  }, []);
+    await refreshPlayerNames();
+  }, [refreshPlayerNames]);
 
-  const addPlayer = useCallback((name: string) => {
+  const addPlayer = useCallback(async (playerId: string) => {
     if (!game) return;
 
+    // Check if player is already in game
+    if (game.players.some(p => p.playerId === playerId)) {
+      return;
+    }
+
     const newPlayer: PlayerInGame = {
-      id: generateId(),
-      name: name.trim(),
+      playerId,
       buyIns: 1,
       currentChips: game.settings.chipsPerBuyIn,
     };
@@ -108,13 +134,15 @@ export function useGame() {
       players: updatedPlayers,
       totals,
     });
-  }, [game]);
+    
+    await refreshPlayerNames();
+  }, [game, refreshPlayerNames]);
 
   const updatePlayer = useCallback((playerId: string, updates: Partial<PlayerInGame>) => {
     if (!game) return;
 
     const updatedPlayers = game.players.map(p =>
-      p.id === playerId ? { ...p, ...updates } : p
+      p.playerId === playerId ? { ...p, ...updates } : p
     );
     const totals = calculateTotals(updatedPlayers, game.settings);
 
@@ -128,7 +156,7 @@ export function useGame() {
   const removePlayer = useCallback((playerId: string) => {
     if (!game) return;
 
-    const updatedPlayers = game.players.filter(p => p.id !== playerId);
+    const updatedPlayers = game.players.filter(p => p.playerId !== playerId);
     const totals = calculateTotals(updatedPlayers, game.settings);
 
     setGame({
@@ -158,7 +186,6 @@ export function useGame() {
     
     // Save to history
     await saveSession(finishedGame);
-    await updatePlayerStatsFromGame(finishedGame);
   }, [game]);
 
   const toggleSettlement = useCallback((settlementId: string) => {
@@ -196,6 +223,8 @@ export function useGame() {
     phase,
     loading,
     currencySymbol,
+    playerNamesMap,
+    getPlayerName,
     startGame,
     addPlayer,
     updatePlayer,
@@ -204,5 +233,6 @@ export function useGame() {
     toggleSettlement,
     resetGame,
     startNewGame,
+    refreshPlayerNames,
   };
 }

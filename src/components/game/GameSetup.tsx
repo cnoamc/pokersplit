@@ -1,24 +1,30 @@
-import { useState } from 'react';
-import { GameMode } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { GameMode, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Coins, Target, Sparkles } from 'lucide-react';
+import { PlayerSelector } from '@/components/players/PlayerSelector';
+import { Coins, Target, Sparkles, ChevronRight, ChevronLeft, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePlayers } from '@/hooks/usePlayers';
 
 interface GameSetupProps {
-  onStart: (mode: GameMode, buyInValue: number, chipsPerBuyIn: number, title?: string) => void;
+  onStart: (mode: GameMode, buyInValue: number, chipsPerBuyIn: number, title?: string, playerIds?: string[]) => void;
   currencySymbol: string;
 }
 
 export function GameSetup({ onStart, currencySymbol }: GameSetupProps) {
+  const [step, setStep] = useState<'settings' | 'players'>('settings');
   const [mode, setMode] = useState<GameMode>('money');
   const [buyInValue, setBuyInValue] = useState('50');
   const [chipsPerBuyIn, setChipsPerBuyIn] = useState('1000');
   const [title, setTitle] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
 
-  const validateAndStart = () => {
+  const { players, addPlayer, checkDuplicateName } = usePlayers();
+
+  const validateSettings = () => {
     const newErrors: Record<string, string> = {};
     
     const buyIn = parseFloat(buyInValue);
@@ -32,11 +38,81 @@ export function GameSetup({ onStart, currencySymbol }: GameSetupProps) {
     }
 
     setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (Object.keys(newErrors).length === 0) {
-      onStart(mode, buyIn, chips, title.trim() || undefined);
+  const handleContinueToPlayers = () => {
+    if (validateSettings()) {
+      setStep('players');
     }
   };
+
+  const handleTogglePlayer = (player: Player) => {
+    setSelectedPlayers(prev => {
+      const isSelected = prev.some(p => p.id === player.id);
+      if (isSelected) {
+        return prev.filter(p => p.id !== player.id);
+      } else {
+        return [...prev, player];
+      }
+    });
+  };
+
+  const handleCreatePlayer = async (name: string): Promise<Player> => {
+    const player = await addPlayer(name);
+    setSelectedPlayers(prev => [...prev, player]);
+    return player;
+  };
+
+  const handleStart = () => {
+    const buyIn = parseFloat(buyInValue);
+    const chips = parseInt(chipsPerBuyIn);
+    const playerIds = selectedPlayers.map(p => p.id);
+    onStart(mode, buyIn, chips, title.trim() || undefined, playerIds);
+  };
+
+  if (step === 'players') {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setStep('settings')}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold">Select Players</h1>
+            <p className="text-sm text-muted-foreground">Choose who's playing tonight</p>
+          </div>
+        </div>
+
+        {/* Player Selection */}
+        <PlayerSelector
+          players={players}
+          selectedPlayers={selectedPlayers}
+          onTogglePlayer={handleTogglePlayer}
+          onCreatePlayer={handleCreatePlayer}
+          checkDuplicateName={checkDuplicateName}
+        />
+
+        {/* Start Button */}
+        <Button 
+          onClick={handleStart}
+          disabled={selectedPlayers.length < 2}
+          className="w-full h-14 text-lg font-semibold chip-button bg-primary hover:bg-primary/90"
+          size="lg"
+        >
+          Start Game
+          <ChevronRight className="w-5 h-5 ml-2" />
+        </Button>
+
+        {selectedPlayers.length < 2 && (
+          <p className="text-center text-sm text-muted-foreground">
+            Select at least 2 players to start
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -136,13 +212,15 @@ export function GameSetup({ onStart, currencySymbol }: GameSetupProps) {
         </div>
       </div>
 
-      {/* Start Button */}
+      {/* Continue Button */}
       <Button 
-        onClick={validateAndStart}
+        onClick={handleContinueToPlayers}
         className="w-full h-14 text-lg font-semibold chip-button bg-primary hover:bg-primary/90"
         size="lg"
       >
-        Start Game
+        <Users className="w-5 h-5 mr-2" />
+        Select Players
+        <ChevronRight className="w-5 h-5 ml-2" />
       </Button>
 
       {/* Mode Explanation */}

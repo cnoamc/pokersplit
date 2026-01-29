@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GameSession } from '@/lib/types';
-import { getAllSessions } from '@/lib/storage';
+import { getAllSessions, getPlayerNamesMap } from '@/lib/storage';
 import { formatCurrency } from '@/lib/calculations';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Calendar, Users, Trophy, ChevronRight, Inbox } from 'lucide-react';
@@ -9,13 +9,18 @@ import { cn } from '@/lib/utils';
 
 export default function HistoryPage() {
   const [sessions, setSessions] = useState<GameSession[]>([]);
+  const [playerNames, setPlayerNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadSessions() {
       try {
-        const data = await getAllSessions();
+        const [data, names] = await Promise.all([
+          getAllSessions(),
+          getPlayerNamesMap()
+        ]);
         setSessions(data.filter(s => s.status === 'finished'));
+        setPlayerNames(names);
       } catch (error) {
         console.error('Error loading sessions:', error);
       } finally {
@@ -24,6 +29,8 @@ export default function HistoryPage() {
     }
     loadSessions();
   }, []);
+
+  const getPlayerName = (playerId: string) => playerNames.get(playerId) || 'Unknown';
 
   const getBiggestWinner = (session: GameSession) => {
     if (!session.results.length) return null;
@@ -97,7 +104,7 @@ export default function HistoryPage() {
                     {winner && winner.netAmount > 0 && (
                       <div className="flex items-center gap-1 text-success">
                         <Trophy className="w-4 h-4" />
-                        <span className="text-xs">{winner.playerName}</span>
+                        <span className="text-xs">{getPlayerName(winner.playerId)}</span>
                       </div>
                     )}
                   </div>

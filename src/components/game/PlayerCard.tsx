@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 
 interface PlayerCardProps {
   player: PlayerInGame;
+  playerName: string;
   settings: GameSettings;
   totals: GameTotals;
   onUpdate: (updates: Partial<PlayerInGame>) => void;
   onRemove: () => void;
 }
 
-export function PlayerCard({ player, settings, totals, onUpdate, onRemove }: PlayerCardProps) {
+export function PlayerCard({ player, playerName, settings, totals, onUpdate, onRemove }: PlayerCardProps) {
   const result = calculatePlayerResult(player, settings, totals);
   const isProfit = result.netAmount > 0;
   const isLoss = result.netAmount < 0;
@@ -41,7 +42,7 @@ export function PlayerCard({ player, settings, totals, onUpdate, onRemove }: Pla
             <User className="w-5 h-5 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">{player.name}</h3>
+            <h3 className="font-semibold text-lg">{playerName}</h3>
             <p className="text-xs text-muted-foreground">
               Invested: {formatCurrency(result.invested, settings.currencySymbol)}
             </p>
