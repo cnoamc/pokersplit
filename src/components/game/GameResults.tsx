@@ -15,8 +15,9 @@ import {
   Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { getPlayerNamesMap } from '@/lib/storage';
 
 interface GameResultsProps {
   game: GameSession;
@@ -26,7 +27,18 @@ interface GameResultsProps {
 
 export function GameResults({ game, onToggleSettlement, onNewGame }: GameResultsProps) {
   const [copied, setCopied] = useState(false);
+  const [playerNames, setPlayerNames] = useState<Map<string, string>>(new Map());
   const { settlementPaid } = useFeedback();
+
+  useEffect(() => {
+    async function loadPlayerNames() {
+      const names = await getPlayerNamesMap();
+      setPlayerNames(names);
+    }
+    loadPlayerNames();
+  }, []);
+
+  const getPlayerName = (playerId: string) => playerNames.get(playerId) || 'Unknown Player';
 
   const handleToggleSettlement = (settlementId: string) => {
     const settlement = game.settlements.find(s => s.id === settlementId);
@@ -41,7 +53,7 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
   const loser = sortedResults[sortedResults.length - 1];
 
   const handleCopyMessage = async () => {
-    const message = generateWhatsAppMessage(game);
+    const message = generateWhatsAppMessage(game, getPlayerName);
     await navigator.clipboard.writeText(message);
     setCopied(true);
     toast.success('Message copied to clipboard!');
@@ -49,12 +61,13 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
   };
 
   const handleWhatsAppShare = () => {
-    const message = generateWhatsAppMessage(game);
+    const message = generateWhatsAppMessage(game, getPlayerName);
     window.open(getWhatsAppLink(message), '_blank');
   };
 
-  const handleExportPDF = () => {
-    downloadSessionPDF(game);
+  const handleExportPDF = async () => {
+    const names = await getPlayerNamesMap();
+    downloadSessionPDF(game, (id) => names.get(id) || 'Unknown');
     toast.success('PDF downloaded!');
   };
 
@@ -74,14 +87,14 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card p-4 border-l-4 border-l-success">
             <div className="text-xs text-muted-foreground mb-1">Biggest Winner</div>
-            <div className="font-semibold">{winner.playerName}</div>
+            <div className="font-semibold">{getPlayerName(winner.playerId)}</div>
             <div className="text-success font-bold number-display">
               +{formatCurrency(winner.netAmount, game.settings.currencySymbol)}
             </div>
           </div>
           <div className="glass-card p-4 border-l-4 border-l-destructive">
             <div className="text-xs text-muted-foreground mb-1">Biggest Loser</div>
-            <div className="font-semibold">{loser.playerName}</div>
+            <div className="font-semibold">{getPlayerName(loser.playerId)}</div>
             <div className="text-destructive font-bold number-display">
               {formatCurrency(loser.netAmount, game.settings.currencySymbol)}
             </div>
@@ -106,7 +119,7 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-medium">{result.playerName}</div>
+                  <div className="font-medium">{getPlayerName(result.playerId)}</div>
                   <div className="text-xs text-muted-foreground">
                     {result.buyIns} buy-in{result.buyIns !== 1 && 's'} • {result.chips.toLocaleString()} chips
                   </div>
@@ -150,7 +163,7 @@ export function GameResults({ game, onToggleSettlement, onNewGame }: GameResults
                   </div>
                   <div className="text-left">
                     <div className={cn('text-sm', settlement.settled && 'line-through opacity-60')}>
-                      {settlement.fromPlayer} <ArrowRight className="inline w-3 h-3" /> {settlement.toPlayer}
+                      {getPlayerName(settlement.fromPlayerId)} <ArrowRight className="inline w-3 h-3" /> {getPlayerName(settlement.toPlayerId)}
                     </div>
                   </div>
                 </div>

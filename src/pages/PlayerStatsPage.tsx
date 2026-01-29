@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlayerStats } from '@/lib/types';
-import { getPlayerStats } from '@/lib/storage';
+import { getPlayerStatsById } from '@/lib/storage';
 import { formatCurrency } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 import { 
@@ -26,7 +26,7 @@ export default function PlayerStatsPage() {
     async function loadPlayer() {
       if (!id) return;
       try {
-        const data = await getPlayerStats(id);
+        const data = await getPlayerStatsById(id);
         if (data) {
           setPlayer(data);
         }
@@ -50,7 +50,7 @@ export default function PlayerStatsPage() {
   if (!player) {
     return (
       <div className="p-4 safe-bottom">
-        <Button variant="ghost" onClick={() => navigate('/stats')} className="mb-4">
+        <Button variant="ghost" onClick={() => navigate('/')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
@@ -66,7 +66,7 @@ export default function PlayerStatsPage() {
   return (
     <div className="p-4 safe-bottom animate-fade-in">
       {/* Header */}
-      <Button variant="ghost" onClick={() => navigate('/stats')} className="mb-4 -ml-2">
+      <Button variant="ghost" onClick={() => navigate('/')} className="mb-4 -ml-2">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
@@ -75,10 +75,10 @@ export default function PlayerStatsPage() {
       <div className="text-center mb-6">
         <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3">
           <span className="text-3xl font-bold text-primary">
-            {player.playerName.charAt(0).toUpperCase()}
+            {player.displayName.charAt(0).toUpperCase()}
           </span>
         </div>
-        <h1 className="text-display-sm gradient-text">{player.playerName}</h1>
+        <h1 className="text-display-sm gradient-text">{player.displayName}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Last played: {lastPlayed.toLocaleDateString()}
         </p>

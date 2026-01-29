@@ -38,8 +38,7 @@ export function calculatePlayerResult(
   const netAmount = cashOut - invested;
   
   return {
-    playerName: player.name,
-    playerId: player.id,
+    playerId: player.playerId,
     buyIns: player.buyIns,
     chips: player.currentChips,
     invested,
@@ -84,9 +83,7 @@ export function calculateSettlements(results: GameResult[]): Settlement[] {
       if (amount > 0.01) {
         settlements.push({
           id: generateId(),
-          fromPlayer: loser.playerName,
           fromPlayerId: loser.playerId,
-          toPlayer: winner.playerName,
           toPlayerId: winner.playerId,
           amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
           settled: false,
@@ -132,7 +129,10 @@ export function getChipDifferenceWarning(totals: GameTotals): string | null {
   return null;
 }
 
-export function generateWhatsAppMessage(session: GameSession): string {
+export function generateWhatsAppMessage(
+  session: GameSession,
+  getPlayerName: (id: string) => string
+): string {
   const { settings, results, settlements, totals } = session;
   
   let message = `🃏 *Poker Night Summary* ♠️\n\n`;
@@ -146,14 +146,17 @@ export function generateWhatsAppMessage(session: GameSession): string {
   for (const result of sortedResults) {
     const emoji = result.netAmount > 0 ? '🟢' : result.netAmount < 0 ? '🔴' : '⚪';
     const sign = result.netAmount > 0 ? '+' : '';
-    message += `${emoji} ${result.playerName}: ${sign}${formatCurrency(result.netAmount, settings.currencySymbol)}\n`;
+    const playerName = getPlayerName(result.playerId);
+    message += `${emoji} ${playerName}: ${sign}${formatCurrency(result.netAmount, settings.currencySymbol)}\n`;
   }
   
   if (settlements.length > 0) {
     message += `\n*Settlements:*\n`;
     for (const s of settlements) {
       const status = s.settled ? '✅' : '⏳';
-      message += `${status} ${s.fromPlayer} ➜ ${s.toPlayer}: ${formatCurrency(s.amount, settings.currencySymbol)}\n`;
+      const fromName = getPlayerName(s.fromPlayerId);
+      const toName = getPlayerName(s.toPlayerId);
+      message += `${status} ${fromName} ➜ ${toName}: ${formatCurrency(s.amount, settings.currencySymbol)}\n`;
     }
   }
   

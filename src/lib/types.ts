@@ -1,5 +1,14 @@
 export type GameMode = 'money' | 'points';
 
+// Global Player (persisted independently)
+export interface Player {
+  id: string;
+  displayName: string;
+  createdAt: string;
+  lastUsedAt: string;
+  isArchived: boolean;
+}
+
 export interface GameSettings {
   mode: GameMode;
   buyInValue: number;
@@ -9,14 +18,12 @@ export interface GameSettings {
 }
 
 export interface PlayerInGame {
-  id: string;
-  name: string;
+  playerId: string;
   buyIns: number;
   currentChips: number;
 }
 
 export interface GameResult {
-  playerName: string;
   playerId: string;
   buyIns: number;
   chips: number;
@@ -27,9 +34,7 @@ export interface GameResult {
 
 export interface Settlement {
   id: string;
-  fromPlayer: string;
   fromPlayerId: string;
-  toPlayer: string;
   toPlayerId: string;
   amount: number;
   settled: boolean;
@@ -56,9 +61,10 @@ export interface GameSession {
   status: 'active' | 'finished';
 }
 
+// Derived stats (computed from sessions, not stored separately)
 export interface PlayerStats {
   playerId: string;
-  playerName: string;
+  displayName: string;
   gamesPlayed: number;
   totalNet: number;
   averageNet: number;

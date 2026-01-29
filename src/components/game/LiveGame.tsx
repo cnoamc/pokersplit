@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { GameSession } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { GameSession, Player } from '@/lib/types';
 import { PlayerCard } from './PlayerCard';
 import { GameSummary } from './GameSummary';
 import { useFeedback } from '@/hooks/useFeedback';
+import { AddPlayerModal } from '@/components/players/AddPlayerModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +17,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Plus, Flag, RotateCcw, ChevronRight } from 'lucide-react';
+import { usePlayers } from '@/hooks/usePlayers';
 
 interface LiveGameProps {
   game: GameSession;
-  onAddPlayer: (name: string) => void;
+  onAddPlayer: (playerId: string) => void;
   onUpdatePlayer: (playerId: string, updates: any) => void;
   onRemovePlayer: (playerId: string) => void;
   onEndGame: () => void;
@@ -35,17 +36,22 @@ export function LiveGame({
   onEndGame, 
   onResetGame 
 }: LiveGameProps) {
-  const [newPlayerName, setNewPlayerName] = useState('');
   const [showAddPlayer, setShowAddPlayer] = useState(false);
   const { playerAdded, gameEnded } = useFeedback();
+  const { players, addPlayer, getPlayerName, checkDuplicateName, refreshPlayers } = usePlayers();
 
-  const handleAddPlayer = () => {
-    if (newPlayerName.trim()) {
-      onAddPlayer(newPlayerName.trim());
-      playerAdded();
-      setNewPlayerName('');
-      setShowAddPlayer(false);
-    }
+  useEffect(() => {
+    refreshPlayers();
+  }, [refreshPlayers]);
+
+  const handleAddPlayer = (player: Player) => {
+    onAddPlayer(player.id);
+    playerAdded();
+  };
+
+  const handleCreatePlayer = async (name: string): Promise<Player> => {
+    const player = await addPlayer(name);
+    return player;
   };
 
   const handleEndGame = () => {
@@ -54,6 +60,7 @@ export function LiveGame({
   };
 
   const canEndGame = game.players.length >= 2;
+  const selectedPlayerIds = game.players.map(p => p.playerId);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -101,55 +108,37 @@ export function LiveGame({
       <div className="space-y-3 stagger-children">
         {game.players.map((player) => (
           <PlayerCard
-            key={player.id}
+            key={player.playerId}
             player={player}
+            playerName={getPlayerName(player.playerId)}
             settings={game.settings}
             totals={game.totals}
-            onUpdate={(updates) => onUpdatePlayer(player.id, updates)}
-            onRemove={() => onRemovePlayer(player.id)}
+            onUpdate={(updates) => onUpdatePlayer(player.playerId, updates)}
+            onRemove={() => onRemovePlayer(player.playerId)}
           />
         ))}
       </div>
 
-      {/* Add Player */}
-      {showAddPlayer ? (
-        <div className="glass-card p-4 animate-fade-in">
-          <Input
-            type="text"
-            value={newPlayerName}
-            onChange={(e) => setNewPlayerName(e.target.value)}
-            placeholder="Player name"
-            className="input-poker mb-3"
-            autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
-          />
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setShowAddPlayer(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddPlayer}
-              disabled={!newPlayerName.trim()}
-              className="flex-1"
-            >
-              Add Player
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button
-          variant="secondary"
-          onClick={() => setShowAddPlayer(true)}
-          className="w-full h-12 border-dashed border-2"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Player
-        </Button>
-      )}
+      {/* Add Player Button */}
+      <Button
+        variant="secondary"
+        onClick={() => setShowAddPlayer(true)}
+        className="w-full h-12 border-dashed border-2"
+      >
+        <Plus className="w-5 h-5 mr-2" />
+        Add Player
+      </Button>
+
+      {/* Add Player Modal */}
+      <AddPlayerModal
+        open={showAddPlayer}
+        onClose={() => setShowAddPlayer(false)}
+        players={players}
+        selectedPlayerIds={selectedPlayerIds}
+        onSelectPlayer={handleAddPlayer}
+        onCreatePlayer={handleCreatePlayer}
+        checkDuplicateName={checkDuplicateName}
+      />
 
       {/* End Game Button */}
       <Button

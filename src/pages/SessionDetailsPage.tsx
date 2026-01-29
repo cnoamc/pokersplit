@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GameSession } from '@/lib/types';
-import { getSession, saveSession, saveActiveGame } from '@/lib/storage';
+import { getSession, saveSession, saveActiveGame, getPlayerNamesMap } from '@/lib/storage';
 import { formatCurrency, generateWhatsAppMessage, getWhatsAppLink } from '@/lib/calculations';
 import { downloadSessionPDF } from '@/lib/pdf';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ export default function SessionDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [session, setSession] = useState<GameSession | null>(null);
+  const [playerNames, setPlayerNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -32,10 +33,14 @@ export default function SessionDetailsPage() {
     async function loadSession() {
       if (!id) return;
       try {
-        const data = await getSession(id);
+        const [data, names] = await Promise.all([
+          getSession(id),
+          getPlayerNamesMap()
+        ]);
         if (data) {
           setSession(data);
         }
+        setPlayerNames(names);
       } catch (error) {
         console.error('Error loading session:', error);
       } finally {
@@ -44,6 +49,8 @@ export default function SessionDetailsPage() {
     }
     loadSession();
   }, [id]);
+
+  const getPlayerName = (playerId: string) => playerNames.get(playerId) || 'Unknown Player';
 
   const handleToggleSettlement = async (settlementId: string) => {
     if (!session) return;
@@ -65,7 +72,7 @@ export default function SessionDetailsPage() {
 
   const handleCopyMessage = async () => {
     if (!session) return;
-    const message = generateWhatsAppMessage(session);
+    const message = generateWhatsAppMessage(session, getPlayerName);
     await navigator.clipboard.writeText(message);
     setCopied(true);
     toast.success('Message copied!');
@@ -74,13 +81,13 @@ export default function SessionDetailsPage() {
 
   const handleWhatsAppShare = () => {
     if (!session) return;
-    const message = generateWhatsAppMessage(session);
+    const message = generateWhatsAppMessage(session, getPlayerName);
     window.open(getWhatsAppLink(message), '_blank');
   };
 
   const handleExportPDF = () => {
     if (!session) return;
-    downloadSessionPDF(session);
+    downloadSessionPDF(session, getPlayerName);
     toast.success('PDF downloaded!');
   };
 
@@ -102,7 +109,7 @@ export default function SessionDetailsPage() {
     };
 
     await saveActiveGame(newGame);
-    navigate('/');
+    navigate('/game');
     toast.success('New game started with same settings!');
   };
 
@@ -187,7 +194,7 @@ export default function SessionDetailsPage() {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="font-medium">{result.playerName}</div>
+                  <div className="font-medium">{getPlayerName(result.playerId)}</div>
                   <div className="text-xs text-muted-foreground">
                     {result.buyIns} buy-in{result.buyIns !== 1 && 's'}
                   </div>
@@ -230,7 +237,7 @@ export default function SessionDetailsPage() {
                     )}
                   </div>
                   <div className={cn('text-sm', settlement.settled && 'line-through opacity-60')}>
-                    {settlement.fromPlayer} → {settlement.toPlayer}
+                    {getPlayerName(settlement.fromPlayerId)} → {getPlayerName(settlement.toPlayerId)}
                   </div>
                 </div>
                 <div className={cn('font-bold number-display', settlement.settled && 'opacity-60')}>
