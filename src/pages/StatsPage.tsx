@@ -203,7 +203,8 @@ export default function StatsPage() {
       {/* Floating Manage Players Button */}
       <Button
         onClick={() => setShowPlayers(true)}
-        className="fixed bottom-24 right-4 z-40 h-14 w-14 rounded-full shadow-lg"
+        className="fixed z-40 h-14 w-14 rounded-full shadow-lg"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))', right: '1rem' }}
         size="icon"
       >
         <Users className="w-6 h-6" />
@@ -211,7 +212,7 @@ export default function StatsPage() {
 
       {/* Players Management Dialog */}
       <Dialog open={showPlayers} onOpenChange={setShowPlayers}>
-        <DialogContent className="glass-card max-h-[80vh] flex flex-col">
+        <DialogContent className="glass-card max-h-[70vh] flex flex-col w-[85vw] max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
