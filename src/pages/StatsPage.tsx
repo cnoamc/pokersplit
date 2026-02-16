@@ -47,6 +47,7 @@ export default function StatsPage() {
   const [editName, setEditName] = useState('');
   const [archivingPlayer, setArchivingPlayer] = useState<Player | null>(null);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [showPlayers, setShowPlayers] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');
 
   const { players, activePlayers, addPlayer, refreshPlayers, checkDuplicateName } = usePlayers();
@@ -132,95 +133,23 @@ export default function StatsPage() {
 
   return (
     <div className="p-4 safe-bottom">
-      <PageHeader title="Players & Stats" subtitle="Manage players & leaderboard" />
-
-      {/* Players Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            Players
-          </h2>
-          <Button size="sm" onClick={() => setShowAddPlayer(true)}>
-            <UserPlus className="w-4 h-4 mr-1" />
-            Add
-          </Button>
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search players..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 input-poker"
-          />
-        </div>
-
-        {/* Player List */}
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {filteredPlayers.length > 0 ? (
-            filteredPlayers.map(player => (
-              <div
-                key={player.id}
-                className="glass-card p-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{player.displayName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Added {new Date(player.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditPlayer(player)}
-                    className="h-8 w-8"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setArchivingPlayer(player)}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  >
-                    <Archive className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              {searchQuery ? `No players matching "${searchQuery}"` : 'No players yet. Add one to get started!'}
-            </div>
-          )}
-        </div>
-      </div>
+      <PageHeader title="Leaderboard" subtitle="Player rankings & stats" />
 
       {/* Leaderboard Section */}
       <div>
-        <h2 className="font-semibold flex items-center gap-2 mb-4">
-          <Trophy className="w-5 h-5 text-gold" />
-          Leaderboard
-        </h2>
-
         {stats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
               <Trophy className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="font-semibold mb-1">No stats yet</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Complete games to see player statistics
             </p>
+            <Button onClick={() => setShowPlayers(true)}>
+              <UserPlus className="w-4 h-4 mr-1" />
+              Manage Players
+            </Button>
           </div>
         ) : (
           <div className="space-y-3 stagger-children">
@@ -270,6 +199,91 @@ export default function StatsPage() {
           </div>
         )}
       </div>
+
+      {/* Floating Manage Players Button */}
+      <Button
+        onClick={() => setShowPlayers(true)}
+        className="fixed bottom-24 right-4 z-40 h-14 w-14 rounded-full shadow-lg"
+        size="icon"
+      >
+        <Users className="w-6 h-6" />
+      </Button>
+
+      {/* Players Management Dialog */}
+      <Dialog open={showPlayers} onOpenChange={setShowPlayers}>
+        <DialogContent className="glass-card max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Manage Players
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
+            {/* Search + Add */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search players..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 input-poker"
+                />
+              </div>
+              <Button size="icon" onClick={() => setShowAddPlayer(true)}>
+                <UserPlus className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Player List */}
+            <div className="space-y-2">
+              {filteredPlayers.length > 0 ? (
+                filteredPlayers.map(player => (
+                  <div
+                    key={player.id}
+                    className="glass-card p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{player.displayName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Added {new Date(player.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditPlayer(player)}
+                        className="h-8 w-8"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setArchivingPlayer(player)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <Archive className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  {searchQuery ? `No players matching "${searchQuery}"` : 'No players yet. Add one to get started!'}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Player Dialog */}
       <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
