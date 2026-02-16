@@ -74,6 +74,14 @@ export interface PlayerStats {
   lastPlayedAt: string;
 }
 
+export interface AppOwner {
+  playerId: string;
+  displayName: string;
+  age: number;
+  onboardingComplete: boolean;
+  createdAt: string;
+}
+
 export interface AppSettings {
   currencySymbol: string;
   darkMode: boolean;
