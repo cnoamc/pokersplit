@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { GameSession, PlayerStats, AppSettings, defaultAppSettings, Player } from './types';
+import { GameSession, PlayerStats, AppSettings, defaultAppSettings, Player, AppOwner } from './types';
 
 interface PokerSplitDB extends DBSchema {
   sessions: {
@@ -271,6 +271,19 @@ export async function computePlayerStats(): Promise<PlayerStats[]> {
 export async function getPlayerStatsById(playerId: string): Promise<PlayerStats | undefined> {
   const allStats = await computePlayerStats();
   return allStats.find(s => s.playerId === playerId);
+}
+
+// ============== APP OWNER ==============
+
+export async function getAppOwner(): Promise<AppOwner | null> {
+  const db = await getDB();
+  const owner = await db.get('settings', 'owner');
+  return (owner as unknown as AppOwner) || null;
+}
+
+export async function saveAppOwner(owner: AppOwner): Promise<void> {
+  const db = await getDB();
+  await db.put('settings', owner as any, 'owner');
 }
 
 // ============== SETTINGS ==============
