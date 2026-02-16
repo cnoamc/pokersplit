@@ -56,7 +56,7 @@ const App = () => {
         <Toaster />
         <Sonner position="top-center" />
         <BrowserRouter>
-          <div className="min-h-screen bg-background pb-20">
+          <div className="min-h-screen bg-background pb-20" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
             <Routes>
               <Route path="/" element={<StatsPage />} />
               <Route path="/game" element={<GamePage />} />
