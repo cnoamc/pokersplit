@@ -29,7 +29,7 @@ export function BottomNav() {
                 className="flex flex-col items-center justify-center gap-1 -mt-5 transition-all duration-200"
               >
                 <div className={cn(
-                  'w-14 h-14 rounded-full flex items-center justify-center shadow-lg',
+                  'w-14 h-14 rounded-full flex items-center justify-center shadow-lg animate-pulse-glow',
                   'bg-primary text-primary-foreground',
                   isActive && 'ring-4 ring-primary/30'
                 )}>
