@@ -3,9 +3,9 @@ import { Gamepad2, History, Trophy, BookOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/', icon: Trophy, label: 'Stats' },
   { path: '/game', icon: Gamepad2, label: 'Game' },
   { path: '/history', icon: History, label: 'History' },
+  { path: '/', icon: Trophy, label: 'Stats', isCenter: true },
   { path: '/rules', icon: BookOpen, label: 'Rules' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
@@ -15,11 +15,30 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {navItems.map(({ path, icon: Icon, label }) => {
+      <div className="flex items-end justify-around h-16 max-w-md mx-auto px-2" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {navItems.map(({ path, icon: Icon, label, isCenter }) => {
           const isActive = path === '/' 
             ? location.pathname === '/' 
             : location.pathname.startsWith(path);
+
+          if (isCenter) {
+            return (
+              <Link
+                key={path}
+                to={path}
+                className="flex flex-col items-center justify-center gap-1 -mt-5 transition-all duration-200"
+              >
+                <div className={cn(
+                  'w-14 h-14 rounded-full flex items-center justify-center shadow-lg',
+                  'bg-primary text-primary-foreground',
+                  isActive && 'ring-4 ring-primary/30'
+                )}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <span className={cn('text-[10px] font-medium', isActive ? 'text-primary' : 'text-muted-foreground')}>{label}</span>
+              </Link>
+            );
+          }
 
           return (
             <Link
@@ -32,12 +51,7 @@ export function BottomNav() {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <div className="relative">
-                <Icon className={cn('w-5 h-5', isActive && 'animate-scale-in')} />
-                {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-                )}
-              </div>
+              <Icon className={cn('w-5 h-5', isActive && 'animate-scale-in')} />
               <span className="text-[10px] font-medium">{label}</span>
             </Link>
           );
