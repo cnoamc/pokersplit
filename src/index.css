@@ -114,6 +114,10 @@
 
   html {
     @apply scroll-smooth;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -121,6 +125,11 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Hide scrollbars but keep functionality */
