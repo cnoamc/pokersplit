@@ -117,12 +117,9 @@ export function GameSetup({ onStart, currencySymbol }: GameSetupProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero */}
-      <div className="text-center py-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/20 mb-4">
-          <Sparkles className="w-10 h-10 text-primary" />
-        </div>
-        <h1 className="text-display gradient-text mb-2">PokerSplit</h1>
-        <p className="text-muted-foreground">Track your poker night like a pro</p>
+      <div className="text-center py-6">
+        <h1 className="text-2xl font-bold gradient-text mb-2">New Game</h1>
+        <p className="text-muted-foreground">Set up your poker night</p>
       </div>
 
       {/* Mode Selection */}
