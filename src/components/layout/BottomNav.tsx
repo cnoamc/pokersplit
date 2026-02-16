@@ -14,8 +14,8 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50">
-      <div className="flex items-end justify-around h-16 max-w-md mx-auto px-2" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex items-end justify-around h-16 max-w-md mx-auto px-2">
         {navItems.map(({ path, icon: Icon, label, isCenter }) => {
           const isActive = path === '/' 
             ? location.pathname === '/' 
